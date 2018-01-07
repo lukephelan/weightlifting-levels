@@ -2,6 +2,8 @@
 
 This is a D3.js and React project visualising weightlifting levels across male and female groups and weight classes.
 
+[Deployed Version](https://weightlifting-levels.herokuapp.com/).
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 ## Get Started
