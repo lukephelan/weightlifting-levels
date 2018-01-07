@@ -25,3 +25,10 @@ It correctly bundles React in production mode and optimizes the build for the be
 
 The build is minified and the filenames include the hashes.<br>
 Your app is ready to be deployed!
+
+## To-Do
+
+- [x] Display a single chart
+- [ ] Show value when hovering over line
+- [ ] Show all weight classes and skill levels for both genders
+- [ ] Interactively switch between weight classes, lifts, skill levels, and genders
