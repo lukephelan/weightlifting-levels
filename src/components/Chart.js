@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './Chart.css';
 import * as d3 from 'd3';
-const lifts = require('../api/data.tsv');
+import liftingData from '../api/data';
 
 class Chart extends Component {
     constructor(props) {
@@ -30,20 +30,38 @@ class Chart extends Component {
         const y = d3.scaleLinear()
             .rangeRound([height, 0]);
 
+        const z = d3.scaleOrdinal(d3.schemeCategory20);
+
         const line = d3.line()
-            .x(function (d) { return x(d.Bodyweight); })
-            .y(function (d) { return y(d.Lift); });
+            .x(function (d) {
+                return x(d.Bodyweight);
+            })
+            .y(function (d) {
+                return y(d.Lift);
+            });
 
-        d3.tsv(lifts, function (d) {
-            d.Bodyweight = +d.Bodyweight
-            d.Lift = +d.Lift;
-            return d;
-        }, function (error, data) {
-            if (error) throw error;
+        function doThis(data) {
+            x.domain(d3.extent(data, function (d) {
+                return d.Bodyweight;
+            }));
+            y.domain(d3.extent(data, function (d) {
+                return d.Lift;
+            }));
+            z.domain(data.map(function (d) {
+                return d.Level;
+            }));
 
-            x.domain(d3.extent(data, function (d) { return d.Bodyweight; }));
-            y.domain(d3.extent(data, function (d) { return d.Lift; }));
+            let dataset1 = [];
+            let dataset2 = [];
+            data.forEach(function(dataset) {
+                if (dataset.Level === 1) {
+                    dataset1.push(dataset);
+                } else if (dataset.Level === 2) {
+                    dataset2.push(dataset);
+                }
+            })
 
+            // Create the x-axis
             g.append('g')
                 .attr('transform', 'translate(0,' + height + ')')
                 .call(d3.axisBottom(x))
@@ -53,6 +71,7 @@ class Chart extends Component {
                 .attr('y', -20)
                 .text('Bodyweight (kg)');
 
+            // Create the y-axis
             g.append('g')
                 .call(d3.axisLeft(y))
                 .append('text')
@@ -63,23 +82,39 @@ class Chart extends Component {
                 .attr('text-anchor', 'end')
                 .text('Lift (kg)');
 
-            g.append('path')
+            var lift = g.selectAll('.lift')
+                .data(data)
+                .enter()
+                .append('g')
+                .attr('class', 'lift');
+
+            lift.append('path')
                 .datum(data)
                 .attr('fill', 'none')
                 .attr('stroke', 'steelblue')
                 .attr('stroke-linejoin', 'round')
                 .attr('stroke-linecap', 'round')
                 .attr('stroke-width', 1.5)
-                .attr('d', line);
+                .attr('d', line(dataset1));
 
-            g.append('text')
+            lift.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', 'red')
+                .attr('stroke-linejoin', 'round')
+                .attr('stroke-linecap', 'round')
+                .attr('stroke-width', 1.5)
+                .attr('d', line(dataset2));
+
+            lift.append('text')
                 .attr('transform', 'translate(' + (width - 50) + ', ' + 0 + ')')
                 .attr('dy', '.35em')
                 .attr('text-anchor', 'start')
                 .style('fill', 'steelblue')
                 .text('Total');
-        });
+        };
 
+        doThis(liftingData);
     }
 
     render() {
