@@ -7,6 +7,7 @@ class Chart extends Component {
     constructor(props) {
         super(props);
         this.createChart = this.createChart.bind(this);
+        this.generateLinearTransition = this.generateLinearTransition.bind(this);
     }
 
     componentDidMount() {
@@ -17,9 +18,35 @@ class Chart extends Component {
         this.createChart();
     }
 
+    generateLinearTransition(start, end) {
+        var rDiff = end.r - start.r;
+        var gDiff = end.g - start.g;
+        var bDiff = end.b - start.b;
+        var steps = Math.max(Math.abs(rDiff), Math.abs(gDiff), Math.abs(bDiff));
+        var rStepSize = rDiff / steps;
+        var gStepSize = gDiff / steps;
+        var bStepSize = bDiff / steps;
+        var tuples = [start];
+        var current = start;
+        for (var i = 0; i < steps; i++) {
+            current = {
+                r: current.r + rStepSize,
+                g: current.g + gStepSize,
+                b: current.b + bStepSize,
+            };
+            tuples.push({
+                r: Math.floor(current.r),
+                g: Math.floor(current.g),
+                b: Math.floor(current.b)
+            });
+        }
+        tuples.push(end);
+        return tuples;
+    }
+
     createChart() {
         const svg = d3.select('svg'),
-            margin = { top: 20, right: 20, bottom: 30, left: 50 },
+            margin = { top: 20, right: 100, bottom: 30, left: 50 },
             width = +svg.attr('width') - margin.left - margin.right,
             height = +svg.attr('height') - margin.top - margin.bottom,
             g = svg.append('g').attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
@@ -40,6 +67,9 @@ class Chart extends Component {
                 return y(d.Lift);
             });
 
+
+        const linearRGBScale = this.generateLinearTransition({ r: 255, g: 0, b: 0 }, { r: 0, g: 255, b: 0 });
+
         function doThis(data) {
             x.domain(d3.extent(data, function (d) {
                 return d.Bodyweight;
@@ -53,13 +83,46 @@ class Chart extends Component {
 
             let dataset1 = [];
             let dataset2 = [];
-            data.forEach(function(dataset) {
-                if (dataset.Level === 1) {
-                    dataset1.push(dataset);
-                } else if (dataset.Level === 2) {
-                    dataset2.push(dataset);
+            let dataset3 = [];
+            let dataset4 = [];
+            let dataset5 = [];
+            let dataset6 = [];
+            let dataset7 = [];
+            let alldata = []
+            data.forEach(function (dataset) {
+                switch (dataset.Level) {
+                    case 1:
+                        dataset1.push(dataset);
+                        break;
+                    case 2:
+                        dataset2.push(dataset);
+                        break;
+                    case 3:
+                        dataset3.push(dataset);
+                        break;
+                    case 4:
+                        dataset4.push(dataset);
+                        break;
+                    case 5:
+                        dataset5.push(dataset);
+                        break;
+                    case 6:
+                        dataset6.push(dataset);
+                        break;
+                    case 7:
+                        dataset7.push(dataset);
+                        break;
+                    default:
+                        break;
                 }
-            })
+            });
+            alldata.push(dataset1);
+            alldata.push(dataset2);
+            alldata.push(dataset3);
+            alldata.push(dataset4);
+            alldata.push(dataset5);
+            alldata.push(dataset6);
+            alldata.push(dataset7);
 
             // Create the x-axis
             g.append('g')
@@ -82,36 +145,33 @@ class Chart extends Component {
                 .attr('text-anchor', 'end')
                 .text('Lift (kg)');
 
-            var lift = g.selectAll('.lift')
+            let lift = g.selectAll('.lift')
                 .data(data)
                 .enter()
                 .append('g')
                 .attr('class', 'lift');
 
-            lift.append('path')
-                .datum(data)
-                .attr('fill', 'none')
-                .attr('stroke', 'steelblue')
-                .attr('stroke-linejoin', 'round')
-                .attr('stroke-linecap', 'round')
-                .attr('stroke-width', 1.5)
-                .attr('d', line(dataset1));
+            const classes = alldata.length;
 
-            lift.append('path')
-                .datum(data)
-                .attr('fill', 'none')
-                .attr('stroke', 'red')
-                .attr('stroke-linejoin', 'round')
-                .attr('stroke-linecap', 'round')
-                .attr('stroke-width', 1.5)
-                .attr('d', line(dataset2));
-
-            lift.append('text')
-                .attr('transform', 'translate(' + (width - 50) + ', ' + 0 + ')')
-                .attr('dy', '.35em')
-                .attr('text-anchor', 'start')
-                .style('fill', 'steelblue')
-                .text('Total');
+            alldata.forEach(function (dataset) {
+                let size = parseInt(dataset[0].Level * (255 / classes), 10);
+                let rgb = linearRGBScale[size];
+                let colour = 'rgb(' + rgb.r + ', ' + rgb.g + ', ' + rgb.b + ')';
+                lift.append('path')
+                    .datum(data)
+                    .attr('fill', 'none')
+                    .attr('stroke', colour)
+                    .attr('stroke-linejoin', 'round')
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-width', 1.5)
+                    .attr('d', line(dataset));
+                lift.append('text')
+                    .attr('transform', 'translate(' + width + ', ' + y(dataset[dataset.length - 1].Lift) + ')')
+                    .attr('text-anchor', 'start')
+                    .attr('dx', '0.5em')
+                    .style('fill', 'steelblue')
+                    .text('Level ' + dataset[0].Level);
+            });
         };
 
         doThis(liftingData);
